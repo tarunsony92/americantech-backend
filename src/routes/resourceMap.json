@@ -1,0 +1,166 @@
+[
+  {
+    "path": "course-categories",
+    "file": "courseCategoryRoutes"
+  },
+  {
+    "path": "courses",
+    "file": "courseRoutes"
+  },
+  {
+    "path": "course-modules",
+    "file": "courseModuleRoutes"
+  },
+  {
+    "path": "lessons",
+    "file": "lessonRoutes"
+  },
+  {
+    "path": "blog-categories",
+    "file": "blogCategoryRoutes"
+  },
+  {
+    "path": "blogs",
+    "file": "blogRoutes"
+  },
+  {
+    "path": "testimonials",
+    "file": "testimonialRoutes"
+  },
+  {
+    "path": "success-stories",
+    "file": "successStoryRoutes"
+  },
+  {
+    "path": "hiring-partners",
+    "file": "hiringPartnerRoutes"
+  },
+  {
+    "path": "jobs",
+    "file": "jobRoutes"
+  },
+  {
+    "path": "job-applications",
+    "file": "jobApplicationRoutes"
+  },
+  {
+    "path": "instructors",
+    "file": "instructorRoutes"
+  },
+  {
+    "path": "student-leads",
+    "file": "studentLeadRoutes"
+  },
+  {
+    "path": "students",
+    "file": "studentRoutes"
+  },
+  {
+    "path": "enrollments",
+    "file": "enrollmentRoutes"
+  },
+  {
+    "path": "certificates",
+    "file": "certificateRoutes"
+  },
+  {
+    "path": "faqs",
+    "file": "fAQRoutes"
+  },
+  {
+    "path": "contact-queries",
+    "file": "contactQueryRoutes"
+  },
+  {
+    "path": "newsletters",
+    "file": "newsletterRoutes"
+  },
+  {
+    "path": "events",
+    "file": "eventRoutes"
+  },
+  {
+    "path": "pages",
+    "file": "pageRoutes"
+  },
+  {
+    "path": "site-settings",
+    "file": "siteSettingRoutes"
+  },
+  {
+    "path": "banners",
+    "file": "bannerRoutes"
+  },
+  {
+    "path": "gallery",
+    "file": "galleryRoutes"
+  },
+  {
+    "path": "videos",
+    "file": "videoRoutes"
+  },
+  {
+    "path": "downloads",
+    "file": "downloadRoutes"
+  },
+  {
+    "path": "social-links",
+    "file": "socialLinkRoutes"
+  },
+  {
+    "path": "menus",
+    "file": "menuRoutes"
+  },
+  {
+    "path": "menu-items",
+    "file": "menuItemRoutes"
+  },
+  {
+    "path": "seo",
+    "file": "sEORoutes"
+  },
+  {
+    "path": "media-library",
+    "file": "mediaLibraryItemRoutes"
+  },
+  {
+    "path": "reviews",
+    "file": "reviewRoutes"
+  },
+  {
+    "path": "team-members",
+    "file": "teamMemberRoutes"
+  },
+  {
+    "path": "career-categories",
+    "file": "careerCategoryRoutes"
+  },
+  {
+    "path": "career-opportunities",
+    "file": "careerOpportunityRoutes"
+  },
+  {
+    "path": "application-statuses",
+    "file": "applicationStatusRoutes"
+  },
+  {
+    "path": "countries",
+    "file": "countryRoutes"
+  },
+  {
+    "path": "states",
+    "file": "stateRoutes"
+  },
+  {
+    "path": "cities",
+    "file": "cityRoutes"
+  },
+  {
+    "path": "roles",
+    "file": "roleRoutes"
+  },
+  {
+    "path": "permissions",
+    "file": "permissionRoutes"
+  }
+]
