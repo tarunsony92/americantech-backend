@@ -1,4 +1,4 @@
-# American Tech Global — Backend
+# American FutureTech  — Backend
 
 Node.js + Express + PostgreSQL (Sequelize) API. Controller → Service → Model layering throughout;
 no business logic lives in controllers.
