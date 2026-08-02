@@ -6,10 +6,10 @@ const { Sequelize, DataTypes } = require("sequelize");
 
 const allConfig = require("../config/config");
 
-// Normalize env — trims stray whitespace some hosting panels inject,
-// and guards against case mismatches.
+// Normalize env — trims stray whitespace and fixes case mismatches
+// (Hostinger hPanel yahan "PRODUCTION" uppercase set kar raha hai).
 const rawEnv = process.env.NODE_ENV || "development";
-const env = rawEnv.trim();
+const env = rawEnv.trim().toLowerCase();
 
 const config = allConfig[env];
 
