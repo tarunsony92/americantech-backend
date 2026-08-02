@@ -6,18 +6,14 @@ const { Sequelize, DataTypes } = require("sequelize");
 
 const allConfig = require("../config/config");
 
-// Normalize env — trims stray whitespace and fixes case mismatches
-// (Hostinger hPanel yahan "PRODUCTION" uppercase set kar raha hai).
 const rawEnv = process.env.NODE_ENV || "development";
 const env = rawEnv.trim().toLowerCase();
-
 const config = allConfig[env];
 
 if (!config) {
   throw new Error(
     `[models/index.js] No config found for NODE_ENV="${rawEnv}" (normalized: "${env}"). ` +
-    `Available keys: ${Object.keys(allConfig).join(", ")}. ` +
-    `Check that NODE_ENV is set exactly to one of these values with no extra whitespace.`
+    `Available keys: ${Object.keys(allConfig).join(", ")}.`
   );
 }
 
