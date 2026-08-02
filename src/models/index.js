@@ -3,7 +3,23 @@
 const fs = require("fs");
 const path = require("path");
 const { Sequelize, DataTypes } = require("sequelize");
-const config = require("../config/config")[process.env.NODE_ENV || "development"];
+
+const allConfig = require("../config/config");
+
+// Normalize env — trims stray whitespace some hosting panels inject,
+// and guards against case mismatches.
+const rawEnv = process.env.NODE_ENV || "development";
+const env = rawEnv.trim();
+
+const config = allConfig[env];
+
+if (!config) {
+  throw new Error(
+    `[models/index.js] No config found for NODE_ENV="${rawEnv}" (normalized: "${env}"). ` +
+    `Available keys: ${Object.keys(allConfig).join(", ")}. ` +
+    `Check that NODE_ENV is set exactly to one of these values with no extra whitespace.`
+  );
+}
 
 const basename = path.basename(__filename);
 const db = {};
