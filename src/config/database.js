@@ -1,5 +1,17 @@
 const { Sequelize } = require("sequelize");
-const config = require("./config")[process.env.NODE_ENV || "development"];
+
+const allConfig = require("./config");
+
+const rawEnv = process.env.NODE_ENV || "development";
+const env = rawEnv.trim().toLowerCase();
+const config = allConfig[env];
+
+if (!config) {
+  throw new Error(
+    `[config/database.js] No config found for NODE_ENV="${rawEnv}" (normalized: "${env}"). ` +
+    `Available keys: ${Object.keys(allConfig).join(", ")}.`
+  );
+}
 
 const sequelize = new Sequelize(config.database, config.username, config.password, config);
 
