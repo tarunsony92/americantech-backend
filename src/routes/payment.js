@@ -2,8 +2,6 @@
 const { Router } = require("express");
 const router = Router();
 
-// Stripe ko lazy-init karo taaki agar key missing ho to clear error mile,
-// crash na ho poora server
 if (!process.env.STRIPE_SECRET_KEY) {
   console.error("❌ STRIPE_SECRET_KEY is missing in .env — payment routes will fail.");
 }
@@ -14,7 +12,6 @@ router.post("/create-payment-intent", async (req, res) => {
   try {
     const { courseId, amount } = req.body;
 
-    // ---- Validation ----
     if (!courseId) {
       return res.status(400).json({ error: "courseId is required" });
     }
@@ -22,18 +19,21 @@ router.post("/create-payment-intent", async (req, res) => {
       return res.status(400).json({ error: "Valid amount is required" });
     }
 
-    // ---- Best practice: verify price from DB, don't fully trust client ----
-    // const course = await Course.findByPk(courseId);
-    // if (!course) return res.status(404).json({ error: "Course not found" });
-    // const verifiedAmount = Math.round(course.price * 100);
-
+    // NOTE: Using explicit payment_method_types (instead of automatic_payment_methods)
+    // forces Stripe.js to ALWAYS include these in the PaymentElement UI, regardless of
+    // the customer's detected country/IP. This matches "whatever is enabled in Stripe
+    // Dashboard should always be offered on the site" as requested.
+    //
+    // IMPORTANT LIMITATION (cannot be changed by any code): if a customer selects
+    // Klarna or Afterpay/Clearpay while physically located outside their supported
+    // countries (US, UK, Canada, Australia, New Zealand), the payment will be
+    // declined by Klarna/Afterpay's own servers at confirmation time -- this is a
+    // licensing restriction on their end, not a Stripe or website limitation, and
+    // cannot be bypassed. Cards and Link have no such restriction and always work.
     const paymentIntent = await stripe.paymentIntents.create({
-      amount, // production mein verifiedAmount use karo
-      currency: "usd", // apni currency ke hisaab se badlo
-      automatic_payment_methods: {
-    enabled: true,
-    allow_redirects: "always",   // 👈 YE LINE ADD KARO
-  },
+      amount,
+      currency: "usd",
+      payment_method_types: ["card", "klarna", "afterpay_clearpay", "link"],
       metadata: { courseId: String(courseId) },
     });
 
