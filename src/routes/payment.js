@@ -30,7 +30,10 @@ router.post("/create-payment-intent", async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount, // production mein verifiedAmount use karo
       currency: "usd", // apni currency ke hisaab se badlo
-      automatic_payment_methods: { enabled: true },
+      automatic_payment_methods: {
+    enabled: true,
+    allow_redirects: "always",   // 👈 YE LINE ADD KARO
+  },
       metadata: { courseId: String(courseId) },
     });
 
