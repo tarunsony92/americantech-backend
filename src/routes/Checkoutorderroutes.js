@@ -7,7 +7,7 @@ const {
   saveCheckoutOrder,
   getCheckoutOrderByPaymentIntent,
   listCheckoutOrders,
-} = require("../controllers/checkoutOrderController");
+} = require("../controllers/Checkoutordercontroller");
 // const { protect } = require("../middleware/authMiddleware"); // uncomment if this must be authenticated
 
 // Saves/updates an order for ANY checkout outcome (succeeded / failed / cancelled).
