@@ -5,6 +5,10 @@ module.exports = (sequelize, DataTypes) => {
       id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
       title: { type: DataTypes.STRING, allowNull: false },
       company: { type: DataTypes.STRING, allowNull: false },
+      imageUrl: {
+  type: DataTypes.STRING,
+  allowNull: true,
+},
       location: { type: DataTypes.STRING, defaultValue: "Remote" },
       type: {
         type: DataTypes.ENUM("Full-time", "Part-time", "Contract", "Internship", "Remote"),
@@ -14,8 +18,9 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM("Entry", "Mid", "Senior", "Lead"),
         defaultValue: "Entry",
       },
-      salaryMin: DataTypes.INTEGER,
-      salaryMax: DataTypes.INTEGER,
+      salaryMin: DataTypes.STRING,
+      salaryMax: DataTypes.STRING,
+      course: DataTypes.STRING,
       currency: { type: DataTypes.STRING, defaultValue: "USD" },
       description: { type: DataTypes.TEXT, allowNull: false },
       responsibilities: { type: DataTypes.ARRAY(DataTypes.TEXT), defaultValue: [] },
