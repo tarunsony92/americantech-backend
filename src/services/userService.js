@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const { Op } = require("sequelize");
-const { User, Role, RefreshToken, ActivityLog } = require("../models");
+const { User, Role, RefreshToken, ActivityLog, Student, Enrollment } = require("../models");
 const { logActivity } = require("../helpers/activityLogger");
 
 const SALT_ROUNDS = 10;
@@ -17,8 +17,22 @@ const notFound = (message = "User not found") => {
   return err;
 };
 
+// Looks up the student's current course assignment (most recent enrollment), if any.
+// Returns null for non-students or students with no enrollment yet.
+const getAssignedCourseId = async (userId) => {
+  const student = await Student.findOne({ where: { userId } });
+  if (!student) return null;
+
+  const latestEnrollment = await Enrollment.findOne({
+    where: { studentId: student.id },
+    order: [["createdAt", "DESC"]],
+  });
+
+  return latestEnrollment ? latestEnrollment.courseId : null;
+};
+
 const userService = {
-  async list({ page = 1, limit = 10, search = "", roleId } = {}) {
+  async list({ page = 1, limit = 10, search = "", roleId, courseId } = {}) {
     const offset = (Number(page) - 1) * Number(limit);
     const where = {};
     if (roleId) where.roleId = roleId;
@@ -39,8 +53,21 @@ const userService = {
       distinct: true,
     });
 
+    // Attach each user's currently assigned course (if any) so the table/edit form can show it.
+    const items = await Promise.all(
+      rows.map(async (row) => {
+        const plain = row.toJSON();
+        plain.courseId = await getAssignedCourseId(row.id);
+        return plain;
+      })
+    );
+
+    const filtered = courseId
+      ? items.filter((u) => String(u.courseId) === String(courseId))
+      : items;
+
     return {
-      items: rows,
+      items: filtered,
       total: count,
       page: Number(page),
       totalPages: Math.max(1, Math.ceil(count / Number(limit))),
@@ -48,13 +75,19 @@ const userService = {
   },
 
   async getById(id) {
-    return User.findByPk(id, {
+    const user = await User.findByPk(id, {
       attributes: PUBLIC_ATTRS,
       include: [{ model: Role, as: "role", attributes: ["id", "name"] }],
     });
+
+    if (!user) return null;
+
+    const plainUser = user.toJSON();
+    plainUser.courseId = await getAssignedCourseId(id);
+    return plainUser;
   },
 
-  async create({ fullName, email, password, phone, roleId }, actorId, req) {
+  async create({ fullName, email, password, phone, roleId, courseId }, actorId, req) {
     const existing = await User.findOne({ where: { email } });
     if (existing) {
       const err = new Error("An account with this email already exists");
@@ -71,14 +104,72 @@ const userService = {
     });
 
     await logActivity({ userId: user.id, actorId, action: "user.created", description: `Created user ${email}`, req });
+
+    // If a course was picked while creating the user, enroll them.
+    // Only makes sense for students, and only if a course was actually selected.
+    if (courseId) {
+      const role = await Role.findByPk(roleId);
+
+      if (role && role.name.toLowerCase() === "student") {
+        const [student] = await Student.findOrCreate({
+          where: { userId: user.id },
+          defaults: { userId: user.id, enrollmentCount: 0 },
+        });
+
+        await Enrollment.create({
+          studentId: student.id,
+          courseId,
+          status: "active",
+          progress: 0,
+          enrolledAt: new Date(),
+        });
+
+        await student.increment("enrollmentCount");
+
+        await logActivity({
+          userId: user.id,
+          actorId,
+          action: "user.course_assigned",
+          description: `Assigned course ${courseId} to ${email}`,
+          req,
+        });
+      }
+    }
+
     return userService.getById(user.id);
   },
 
-  async update(id, { fullName, phone, roleId }, actorId, req) {
+  async update(id, { fullName, phone, roleId, courseId }, actorId, req) {
     const user = await User.findByPk(id);
     if (!user) throw notFound();
     await user.update({ fullName, phone, roleId });
     await logActivity({ userId: id, actorId, action: "user.updated", req });
+
+    if (courseId) {
+      const role = await Role.findByPk(roleId || user.roleId);
+
+      if (role && role.name.toLowerCase() === "student") {
+        const [student] = await Student.findOrCreate({
+          where: { userId: id },
+          defaults: { userId: id, enrollmentCount: 0 },
+        });
+
+        const [enrollment, created] = await Enrollment.findOrCreate({
+          where: { studentId: student.id, courseId },
+          defaults: { status: "active", progress: 0, enrolledAt: new Date() },
+        });
+
+        if (created) {
+          await student.increment("enrollmentCount");
+        }
+
+        await logActivity({
+          userId: id, actorId, action: "user.course_assigned",
+          description: `Assigned course ${courseId}`, req,
+        });
+      }
+    }
+
     return userService.getById(id);
   },
 
