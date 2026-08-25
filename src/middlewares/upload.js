@@ -32,4 +32,17 @@ const uploadMedia = multer({
   fileFilter: fileFilterFor(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]),
 });
 
-module.exports = { uploadResume, uploadMedia };
+// Lesson notes — allow PDF + common doc/image types
+const uploadNotes = multer({
+  storage: makeStorage("notes"),
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: fileFilterFor([
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "image/jpeg",
+    "image/png",
+  ]),
+});
+
+module.exports = { uploadResume, uploadMedia, uploadNotes };
