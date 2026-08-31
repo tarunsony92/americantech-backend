@@ -8,10 +8,11 @@ const { requirePermission } = require("../middlewares/permission");
 const canWrite = [authenticate, requirePermission("courses:write")];
 const router = createCrudRouter(courseController, canWrite);
 
-// GET /courses/:id/content — full modules + lessons for a course (public read, same as
-// the rest of this router). Registered AFTER the generic router so /:id above still
-// matches plain "/courses/:id" first for exact id lookups, and this only catches the
-// more specific "/:id/content" path.
-router.get("/:id/content", courseController.getContent);
+// GET /courses/:id/content — batch-specific modules + lessons for a course. Needs
+// authenticate (not public anymore) so req.user.id is available to resolve which batch
+// the requesting student is enrolled in. Registered AFTER the generic router so /:id
+// above still matches plain "/courses/:id" first for exact id lookups, and this only
+// catches the more specific "/:id/content" path.
+router.get("/:id/content", authenticate, courseController.getContent);
 
 module.exports = router;

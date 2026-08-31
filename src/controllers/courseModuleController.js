@@ -4,6 +4,7 @@ const createCrudController = require("./createCrudController");
 const buildFilters = (req) => {
   const filters = {};
   if (req.query.courseId) filters.courseId = req.query.courseId;
+  if (req.query.batchId) filters.batchId = req.query.batchId;
   return filters;
 };
 

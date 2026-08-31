@@ -17,6 +17,7 @@ router.post("/:id/enable", ...canWrite, userController.enable);
 router.post("/:id/disable", ...canWrite, userController.disable);
 router.post("/:id/reset-password", ...canWrite, userController.resetPassword);
 router.post("/:id/assign-role", ...canWrite, userController.assignRole);
+router.post("/:id/assign-batch", ...canWrite, userController.assignBatch);
 
 router.get("/:id/login-history", ...canRead, userController.loginHistory);
 router.get("/:id/activity-history", ...canRead, userController.activityHistory);

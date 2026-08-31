@@ -17,22 +17,24 @@ const notFound = (message = "User not found") => {
   return err;
 };
 
-// Looks up the student's current course assignment (most recent enrollment), if any.
-// Returns null for non-students or students with no enrollment yet.
+// Looks up the student's current course + batch assignment (most recent enrollment), if any.
+// Returns null values for non-students or students with no enrollment yet.
 const getAssignedCourseId = async (userId) => {
   const student = await Student.findOne({ where: { userId } });
-  if (!student) return null;
+  if (!student) return { courseId: null, batchId: null };
 
   const latestEnrollment = await Enrollment.findOne({
     where: { studentId: student.id },
     order: [["createdAt", "DESC"]],
   });
 
-  return latestEnrollment ? latestEnrollment.courseId : null;
+  return latestEnrollment
+    ? { courseId: latestEnrollment.courseId, batchId: latestEnrollment.batchId }
+    : { courseId: null, batchId: null };
 };
 
 const userService = {
-  async list({ page = 1, limit = 10, search = "", roleId, courseId } = {}) {
+  async list({ page = 1, limit = 10, search = "", roleId, courseId, batchId } = {}) {
     const offset = (Number(page) - 1) * Number(limit);
     const where = {};
     if (roleId) where.roleId = roleId;
@@ -53,18 +55,20 @@ const userService = {
       distinct: true,
     });
 
-    // Attach each user's currently assigned course (if any) so the table/edit form can show it.
+    // Attach each user's currently assigned course + batch (if any) so the table/edit form can show it.
     const items = await Promise.all(
       rows.map(async (row) => {
         const plain = row.toJSON();
-        plain.courseId = await getAssignedCourseId(row.id);
+        const assignment = await getAssignedCourseId(row.id);
+        plain.courseId = assignment.courseId;
+        plain.batchId = assignment.batchId;
         return plain;
       })
     );
 
-    const filtered = courseId
-      ? items.filter((u) => String(u.courseId) === String(courseId))
-      : items;
+    let filtered = items;
+    if (courseId) filtered = filtered.filter((u) => String(u.courseId) === String(courseId));
+    if (batchId) filtered = filtered.filter((u) => String(u.batchId) === String(batchId));
 
     return {
       items: filtered,
@@ -83,11 +87,13 @@ const userService = {
     if (!user) return null;
 
     const plainUser = user.toJSON();
-    plainUser.courseId = await getAssignedCourseId(id);
+    const assignment = await getAssignedCourseId(id);
+    plainUser.courseId = assignment.courseId;
+    plainUser.batchId = assignment.batchId;
     return plainUser;
   },
 
-  async create({ fullName, email, password, phone, roleId, courseId }, actorId, req) {
+  async create({ fullName, email, password, phone, roleId, courseId, batchId }, actorId, req) {
     const existing = await User.findOne({ where: { email } });
     if (existing) {
       const err = new Error("An account with this email already exists");
@@ -105,7 +111,7 @@ const userService = {
 
     await logActivity({ userId: user.id, actorId, action: "user.created", description: `Created user ${email}`, req });
 
-    // If a course was picked while creating the user, enroll them.
+    // If a course (and optionally a batch) was picked while creating the user, enroll them.
     // Only makes sense for students, and only if a course was actually selected.
     if (courseId) {
       const role = await Role.findByPk(roleId);
@@ -119,6 +125,7 @@ const userService = {
         await Enrollment.create({
           studentId: student.id,
           courseId,
+          batchId: batchId || null,
           status: "active",
           progress: 0,
           enrolledAt: new Date(),
@@ -130,7 +137,9 @@ const userService = {
           userId: user.id,
           actorId,
           action: "user.course_assigned",
-          description: `Assigned course ${courseId} to ${email}`,
+          description: batchId
+            ? `Assigned course ${courseId} (batch ${batchId}) to ${email}`
+            : `Assigned course ${courseId} to ${email}`,
           req,
         });
       }
@@ -139,7 +148,7 @@ const userService = {
     return userService.getById(user.id);
   },
 
-  async update(id, { fullName, phone, roleId, courseId }, actorId, req) {
+  async update(id, { fullName, phone, roleId, courseId, batchId }, actorId, req) {
     const user = await User.findByPk(id);
     if (!user) throw notFound();
     await user.update({ fullName, phone, roleId });
@@ -156,8 +165,15 @@ const userService = {
 
         const [enrollment, created] = await Enrollment.findOrCreate({
           where: { studentId: student.id, courseId },
-          defaults: { status: "active", progress: 0, enrolledAt: new Date() },
+          defaults: { batchId: batchId || null, status: "active", progress: 0, enrolledAt: new Date() },
         });
+
+        // If the enrollment already existed (course same as before) but the batch changed,
+        // update it to the newly selected batch.
+        if (!created && batchId && enrollment.batchId !== batchId) {
+          enrollment.batchId = batchId;
+          await enrollment.save();
+        }
 
         if (created) {
           await student.increment("enrollmentCount");
@@ -165,7 +181,8 @@ const userService = {
 
         await logActivity({
           userId: id, actorId, action: "user.course_assigned",
-          description: `Assigned course ${courseId}`, req,
+          description: batchId ? `Assigned course ${courseId} (batch ${batchId})` : `Assigned course ${courseId}`,
+          req,
         });
       }
     }
@@ -230,6 +247,33 @@ const userService = {
     user.roleId = roleId;
     await user.save();
     await logActivity({ userId: id, actorId, action: "user.role_assigned", description: `Assigned role ${role.name}`, req });
+    return userService.getById(id);
+  },
+
+  // Directly assign/change a student's batch within their current enrollment for the given course.
+  async assignBatch(id, { courseId, batchId }, actorId, req) {
+    const student = await Student.findOne({ where: { userId: id } });
+    if (!student) {
+      const err = new Error("This user has no student profile");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const enrollment = await Enrollment.findOne({ where: { studentId: student.id, courseId } });
+    if (!enrollment) {
+      const err = new Error("This user is not enrolled in the given course");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    enrollment.batchId = batchId;
+    await enrollment.save();
+
+    await logActivity({
+      userId: id, actorId, action: "user.batch_assigned",
+      description: `Assigned batch ${batchId} for course ${courseId}`, req,
+    });
+
     return userService.getById(id);
   },
 

@@ -4,8 +4,8 @@ const userService = require("../services/userService");
 
 const userController = {
   list: asyncHandler(async (req, res) => {
-    const { page, limit, search, roleId } = req.query;
-    const result = await userService.list({ page, limit, search, roleId });
+    const { page, limit, search, roleId, courseId, batchId } = req.query;
+    const result = await userService.list({ page, limit, search, roleId, courseId, batchId });
     return success(res, {
       message: "Users fetched successfully",
       data: { items: result.items, total: result.total },
@@ -52,6 +52,11 @@ const userController = {
   assignRole: asyncHandler(async (req, res) => {
     const user = await userService.assignRole(req.params.id, req.body.roleId, req.user.id, req);
     return success(res, { message: "Role assigned successfully", data: user });
+  }),
+
+  assignBatch: asyncHandler(async (req, res) => {
+    const user = await userService.assignBatch(req.params.id, req.body, req.user.id, req);
+    return success(res, { message: "Batch assigned successfully", data: user });
   }),
 
   loginHistory: asyncHandler(async (req, res) => {

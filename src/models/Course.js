@@ -4,12 +4,13 @@ const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class Course extends Model {
     static associate(models) {
-            models.Course.belongsTo(models.CourseCategory, { foreignKey: "categoryId", as: "category" });
+      models.Course.belongsTo(models.CourseCategory, { foreignKey: "categoryId", as: "category" });
       models.Course.belongsTo(models.Instructor, { foreignKey: "instructorId", as: "instructor" });
       models.Course.hasMany(models.CourseModule, { foreignKey: "courseId", as: "modules" });
       models.Course.hasMany(models.Enrollment, { foreignKey: "courseId", as: "enrollments" });
       models.Course.hasMany(models.Review, { foreignKey: "courseId", as: "reviews" });
       models.Course.hasMany(models.Certificate, { foreignKey: "courseId", as: "certificates" });
+      models.Course.hasMany(models.Batch, { foreignKey: "courseId", as: "batches" });
     }
   }
 
