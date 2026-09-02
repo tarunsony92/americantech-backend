@@ -6,9 +6,9 @@ module.exports = (sequelize, DataTypes) => {
       title: { type: DataTypes.STRING, allowNull: false },
       company: { type: DataTypes.STRING, allowNull: false },
       imageUrl: {
-  type: DataTypes.STRING,
-  allowNull: true,
-},
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       location: { type: DataTypes.STRING, defaultValue: "Remote" },
       type: {
         type: DataTypes.ENUM("Full-time", "Part-time", "Contract", "Internship", "Remote"),
@@ -26,6 +26,14 @@ module.exports = (sequelize, DataTypes) => {
       responsibilities: { type: DataTypes.ARRAY(DataTypes.TEXT), defaultValue: [] },
       requirements: { type: DataTypes.ARRAY(DataTypes.TEXT), defaultValue: [] },
       skills: { type: DataTypes.ARRAY(DataTypes.TEXT), defaultValue: [] },
+
+      // ---- New fields ----
+      preferredQualifications: { type: DataTypes.ARRAY(DataTypes.TEXT), defaultValue: [] },
+      technicalSkills: { type: DataTypes.ARRAY(DataTypes.TEXT), defaultValue: [] },
+      softSkills: { type: DataTypes.ARRAY(DataTypes.TEXT), defaultValue: [] },
+      careerGrowth: { type: DataTypes.TEXT, allowNull: true },
+      // ---------------------
+
       category: { type: DataTypes.STRING, allowNull: true },
       applyLink: DataTypes.STRING,
       isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
